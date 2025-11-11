@@ -4,6 +4,7 @@ A mobile social application built with React Native (Expo) that allows users to 
 
 ## Features
 
+- Beautiful onboarding flow
 - User authentication (sign up, login, logout)
 - Create and share posts with text and images
 - View a feed of posts from all users
@@ -33,7 +34,7 @@ A mobile social application built with React Native (Expo) that allows users to 
 3. Configure Supabase:
    - Create a Supabase project at https://supabase.io
    - Update the Supabase URL and anon key in `lib/supabase.ts`
-   - Run the SQL migration in `supabase/migrations/` in your Supabase SQL editor
+   - Run the SQL migrations in `supabase/migrations/` in your Supabase SQL editor
 
 4. Start the development server:
    ```bash
@@ -52,6 +53,11 @@ types/            # TypeScript types
 ```
 
 ## Key Components
+
+### Onboarding
+- Beautiful 3-screen onboarding flow
+- Skip functionality to go directly to login
+- Smooth navigation between screens
 
 ### Authentication
 - Sign up with email, password, and username
@@ -110,6 +116,15 @@ Images are stored in the `images` bucket in Supabase Storage with the following 
 - Users can only upload, update, and delete their own images
 
 ## Troubleshooting
+
+### "Could not find public.posts in the schema cache" Error
+
+This error typically occurs when there's a mismatch between the frontend code and the database schema. To fix this:
+
+1. Make sure you've run all the SQL migrations in the `supabase/migrations/` directory
+2. Check that the `posts` and `profiles` tables exist in your Supabase database
+3. Verify that the table structure matches what's defined in the migrations
+4. If issues persist, run the `20251111050000_fix_framez_schema.sql` migration to recreate the tables
 
 ### Image Upload Issues
 If images are not uploading:

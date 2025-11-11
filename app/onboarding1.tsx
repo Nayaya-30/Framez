@@ -1,7 +1,13 @@
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Link } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function OnboardingScreen1() {
+  const handleSkip = async () => {
+    // Mark onboarding as complete
+    await AsyncStorage.setItem('onboardingComplete', 'true');
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.content}>
@@ -23,7 +29,7 @@ export default function OnboardingScreen1() {
         </Link>
         
         <Link href="/(auth)/login" asChild>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={handleSkip}>
             <Text style={styles.skipText}>Skip</Text>
           </TouchableOpacity>
         </Link>
