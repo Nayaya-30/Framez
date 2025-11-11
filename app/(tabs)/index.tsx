@@ -83,9 +83,9 @@ export default function Feed() {
         </View>
       </View>
 
-      {item.image_url && (
+      {item.image_url ? (
         <Image source={{ uri: item.image_url }} style={styles.postImage} resizeMode="cover" />
-      )}
+      ) : null}
 
       <View style={styles.postContent}>
         <Text style={styles.contentText}>
