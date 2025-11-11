@@ -92,7 +92,8 @@ export default function CreatePost() {
         }
       }
 
-      const { error } = await supabase
+      // Insert the post into the database
+      const { data, error } = await supabase
         .from('posts')
         .insert([
           {
@@ -100,7 +101,8 @@ export default function CreatePost() {
             content: content.trim(),
             image_url: imageUrl,
           },
-        ]);
+        ])
+        .select();
 
       if (error) throw error;
 
@@ -109,7 +111,8 @@ export default function CreatePost() {
       router.push('/(tabs)');
       Alert.alert('Success', 'Post created successfully!');
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to create post');
+      console.error('Error creating post:', error);
+      Alert.alert('Error', error.message || 'Failed to create post. Please try again.');
     } finally {
       setLoading(false);
     }
