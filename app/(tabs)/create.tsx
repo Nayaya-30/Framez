@@ -35,20 +35,28 @@ export default function CreatePost() {
 
   const uploadImage = async (uri: string): Promise<string | null> => {
     try {
+      // Fetch the image as a blob
       const response = await fetch(uri);
       const blob = await response.blob();
-      const fileExt = uri.split('.').pop();
+      
+      // Generate a unique file name
+      const fileExt = uri.split('.').pop()?.toLowerCase() || 'jpg';
       const fileName = `${user?.id}-${Date.now()}.${fileExt}`;
       const filePath = `posts/${fileName}`;
 
+      // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('images')
-        .upload(filePath, blob);
+        .upload(filePath, blob, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
       if (uploadError) {
         throw uploadError;
       }
 
+      // Get the public URL of the uploaded image
       const { data } = supabase.storage
         .from('images')
         .getPublicUrl(filePath);
@@ -56,6 +64,7 @@ export default function CreatePost() {
       return data.publicUrl;
     } catch (error) {
       console.error('Error uploading image:', error);
+      Alert.alert('Upload Error', 'Failed to upload image: ' + (error as Error).message);
       return null;
     }
   };
@@ -66,6 +75,11 @@ export default function CreatePost() {
       return;
     }
 
+    if (!user) {
+      Alert.alert('Error', 'You must be logged in to create a post');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -73,13 +87,16 @@ export default function CreatePost() {
 
       if (imageUri) {
         imageUrl = await uploadImage(imageUri);
+        if (!imageUrl) {
+          throw new Error('Failed to upload image');
+        }
       }
 
       const { error } = await supabase
         .from('posts')
         .insert([
           {
-            user_id: user?.id,
+            user_id: user.id,
             content: content.trim(),
             image_url: imageUrl,
           },
@@ -90,6 +107,7 @@ export default function CreatePost() {
       setContent('');
       setImageUri(null);
       router.push('/(tabs)');
+      Alert.alert('Success', 'Post created successfully!');
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to create post');
     } finally {

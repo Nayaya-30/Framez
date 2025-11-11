@@ -14,8 +14,10 @@ export default function ProfileScreen() {
   const router = useRouter();
 
   useEffect(() => {
-    fetchProfile();
-    fetchUserPosts();
+    if (user) {
+      fetchProfile();
+      fetchUserPosts();
+    }
   }, [user]);
 
   const fetchProfile = async () => {
@@ -57,8 +59,13 @@ export default function ProfileScreen() {
   };
 
   const handleSignOut = async () => {
-    await signOut();
-    router.replace('/(auth)/login');
+    try {
+      await signOut();
+      router.replace('/(auth)/login');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      Alert.alert('Error', 'Failed to sign out');
+    }
   };
 
   const renderPost = ({ item }: { item: Post }) => (
@@ -107,7 +114,7 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        <Text style={styles.username}>{profile?.username}</Text>
+        <Text style={styles.username}>{profile?.username || 'User'}</Text>
         <Text style={styles.email}>{user?.email}</Text>
 
         <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
