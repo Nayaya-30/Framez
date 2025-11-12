@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import{ useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, Alert, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/contexts/AuthContext';
+import {useAuth } from '@/contexts/AuthContext';
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'lucide-react-native';
 
@@ -17,7 +17,7 @@ export default function CreatePost() {
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    if (status !== 'granted') {
+  if (status !== 'granted') {
       Alert.alert('Permission needed', 'We need camera roll permissions to upload images');
       return;
     }
@@ -25,7 +25,7 @@ export default function CreatePost() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [4, 3],
+      aspect: [4,3],
       quality: 0.8,
     });
 
@@ -38,14 +38,24 @@ export default function CreatePost() {
     try {
       setUploading(true);
       
-      // Fetch the image as a blob
-      const response = await fetch(uri);
-      const blob = await response.blob();
+      // ConvertURI to blob using a different method
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.onload = function() {
+          resolve(xhr.response);
+        };
+        xhr.onerror = function() {
+          reject(new Error('Failed to fetch image'));
+        };
+       xhr.responseType = 'blob';
+        xhr.open('GET', uri, true);
+        xhr.send();
+      });
       
       // Generate a unique file name
       const fileExt = uri.split('.').pop()?.toLowerCase() || 'jpg';
       const fileName = `${user?.id}-${Date.now()}.${fileExt}`;
-      const filePath = `posts/${fileName}`;
+const filePath = `posts/${fileName}`;
 
       // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
@@ -55,7 +65,7 @@ export default function CreatePost() {
           upsert: false
         });
 
-      if (uploadError) {
+     if (uploadError) {
         throw uploadError;
       }
 
@@ -90,7 +100,7 @@ export default function CreatePost() {
     try {
       let imageUrl = null;
 
-      if (imageUri) {
+      if(imageUri) {
         imageUrl = await uploadImage(imageUri);
         if (!imageUrl) {
           throw new Error('Failed to upload image');
@@ -101,10 +111,10 @@ export default function CreatePost() {
       const { data, error } = await supabase
         .from('posts')
         .insert([
-          {
+{
             user_id: user.id,
-            content: content.trim(),
-            image_url: imageUrl,
+            content: content.trim()|| '', // Ensure content is never null
+            image_url: imageUrl || null,
           },
         ])
         .select();
@@ -115,7 +125,7 @@ export default function CreatePost() {
       setImageUri(null);
       router.push('/(tabs)');
       Alert.alert('Success', 'Post created successfully!');
-    } catch (error: any) {
+    } catch (error:any) {
       console.error('Error creating post:', error);
       Alert.alert('Error', error.message || 'Failed to create post. Please try again.');
     } finally {
@@ -154,7 +164,7 @@ export default function CreatePost() {
 
           <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
             <Camera color="#fff" size={24} />
-            <Text style={styles.imageButtonText}>Add Image</Text>
+            <Textstyle={styles.imageButtonText}>Add Image</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -172,11 +182,11 @@ export default function CreatePost() {
             ) : (
               <Text style={styles.postButtonText}>
                 Share Post
-              </Text>
+</Text>
             )}
           </TouchableOpacity>
         </View>
-      </ScrollView>
+</ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -210,18 +220,18 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: 300,
-    borderRadius: 10,
+   borderRadius: 10,
   },
   removeButton: {
-    position: 'absolute',
+position: 'absolute',
     top: 10,
     right: 10,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     paddingHorizontal: 15,
     paddingVertical: 8,
-    borderRadius: 5,
+borderRadius: 5,
   },
-  removeButtonText: {
+  removeButtonText:{
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',
@@ -231,7 +241,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    padding: 15,
+padding: 15,
     borderWidth: 1,
     borderColor: '#333',
     borderRadius: 10,
@@ -243,7 +253,7 @@ const styles = StyleSheet.create({
   },
   postButton: {
     backgroundColor: '#8a2be2',
-    borderRadius: 10,
+    borderRadius:10,
     padding: 15,
     alignItems: 'center',
     shadowColor: '#8a2be2',
@@ -264,7 +274,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   loadingContainer: {
-    flexDirection: 'row',
+flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },

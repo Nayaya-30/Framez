@@ -23,18 +23,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      
+      // Ensure profile exists when we have a session
+      if (session?.user) {
+        ensureProfileExists(session.user);
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      (async () => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        // Ensure profile exists when user logs in/signs up
-        if (session?.user) {
-          await ensureProfileExists(session.user);
-        }
-      })();
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+      
+      // Ensure profile exists when user logs in/signs up
+      if (session?.user) {
+        ensureProfileExists(session.user);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -45,7 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, username')
         .eq('id', user.id)
         .maybeSingle();
 
@@ -63,13 +67,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error('Error creating profile:', insertError);
         }
       }
+      return profile;
     } catch (error) {
       console.error('Error checking profile existence:', error);
     }
   };
 
   const signUp = async (email: string, password: string, username: string) => {
-    const { error } = await supabase.auth.signUp({
+    const { error, data } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -78,6 +83,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
       },
     });
+    
+    // If signup was successful, log the user in immediately
+    if (!error && data.user) {
+      // Create profile for the new user
+      await ensureProfileExists(data.user);
+    }
+    
     return { error };
   };
 

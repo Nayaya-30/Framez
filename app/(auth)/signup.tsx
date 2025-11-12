@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import{ useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ImageBackground } from 'react-native'
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function SignUp() {
-  const [email, setEmail] = useState('');
+  const [email,setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -12,7 +12,7 @@ export default function SignUp() {
   const { signUp } = useAuth();
   const router = useRouter();
 
-  const handleSignUp = async () => {
+  const handleSignUp= async () => {
     if (!email || !username || !password) {
       setError('Please fill in all fields');
       return;
@@ -26,22 +26,22 @@ export default function SignUp() {
     setLoading(true);
     setError('');
 
-    const { error } = await signUp(email, password, username);
+const { error } = await signUp(email, password, username);
 
     if (error) {
       setError(error.message);
       setLoading(false);
-    } else {
-      router.replace('/(tabs)');
-    }
+    } 
+// User will be automatically redirected to the main app after signup
+    // due to the auth state change listener in AuthContext
   };
 
-  return (
+return (
     <ImageBackground 
       source={{ uri: 'https://images.unsplash.com/photo-1515537163457-a4d3cefab7c8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1746&q=80' }} 
       style={styles.container}
       resizeMode="cover"
-    >
+>
       <View style={styles.overlay}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -50,7 +50,7 @@ export default function SignUp() {
           <View style={styles.content}>
             <Text style={styles.logo}>Framez</Text>
 
-            <View style={styles.form}>
+           <View style={styles.form}>
               <TextInput
                 style={styles.input}
                 placeholder="Email"
@@ -63,7 +63,7 @@ export default function SignUp() {
 
               <TextInput
                 style={styles.input}
-                placeholder="Username"
+               placeholder="Username"
                 value={username}
                 onChangeText={setUsername}
                 autoCapitalize="none"
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
   },
-  logo: {
+ logo: {
     fontSize: 48,
     fontWeight: '700',
     textAlign: 'center',
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-  },
+},
   button: {
     backgroundColor: 'rgba(138, 43, 226, 0.9)',
     borderRadius: 10,
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   buttonText: {
-    color: '#fff',
+color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     color: '#FF6B6B',
     fontSize: 14,
     textAlign: 'center',
-    backgroundColor: 'rgba(255, 107, 107, 0.2)',
+    backgroundColor: 'rgba(255, 107,107, 0.2)',
     padding: 10,
     borderRadius: 5,
   },

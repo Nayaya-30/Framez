@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import{ useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
@@ -9,7 +9,7 @@ import * as ImagePicker from 'expo-image-picker';
 
 export default function ProfileScreen() {
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [posts, setPosts] = useState<Post[]>([]);
+ const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const { user, signOut } = useAuth();
   const router = useRouter();
@@ -43,7 +43,7 @@ export default function ProfileScreen() {
         .select(`
           *,
           profiles (
-            username,
+           username,
             avatar_url
           )
         `)
@@ -54,7 +54,7 @@ export default function ProfileScreen() {
       setPosts(data || []);
     } catch (error) {
       console.error('Error fetching posts:', error);
-    } finally {
+}finally {
       setLoading(false);
     }
   };
@@ -65,7 +65,7 @@ export default function ProfileScreen() {
       router.replace('/(auth)/login');
     } catch (error) {
       console.error('Error signing out:', error);
-      Alert.alert('Error', 'Failed to sign out');
+      Alert.alert('Error', 'Failed tosign out');
     }
   };
 
@@ -77,7 +77,7 @@ export default function ProfileScreen() {
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
+   const result= await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
@@ -86,24 +86,34 @@ export default function ProfileScreen() {
 
     if (!result.canceled) {
       uploadAvatar(result.assets[0].uri);
-    }
-  };
+   }
+ };
 
-  const uploadAvatar = async (uri: string) => {
+const uploadAvatar = async (uri: string) => {
     try {
-      // Fetch the image as a blob
-      const response = await fetch(uri);
-      const blob = await response.blob();
+      // ConvertURI to blob using a different method
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.onload = function() {
+          resolve(xhr.response);
+        };
+        xhr.onerror = function() {
+          reject(new Error('Failed to fetch image'));
+        };
+       xhr.responseType = 'blob';
+        xhr.open('GET', uri, true);
+        xhr.send();
+      });
       
       // Generate a unique file name
       const fileExt = uri.split('.').pop()?.toLowerCase() || 'jpg';
       const fileName = `${user?.id}/avatar.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
+      constfilePath = `avatars/${fileName}`;
 
       // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('images')
-        .upload(filePath, blob, {
+        .upload(filePath, blob,{
           cacheControl: '3600',
           upsert: true
         });
@@ -117,7 +127,7 @@ export default function ProfileScreen() {
         .from('images')
         .getPublicUrl(filePath);
 
-      // Update profile with new avatar URL
+     // Update profile with new avatar URL
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: data.publicUrl })
@@ -127,7 +137,7 @@ export default function ProfileScreen() {
         throw updateError;
       }
 
-      // Refresh profile
+      //Refresh profile
       fetchProfile();
       Alert.alert('Success', 'Avatar updated successfully!');
     } catch (error) {
@@ -136,13 +146,13 @@ export default function ProfileScreen() {
     }
   };
 
-  const renderPost = ({ item }: { item: Post }) => (
+const renderPost =({ item}: { item: Post }) => (
     <View style={styles.postItem}>
       {item.image_url ? (
         <Image source={{ uri: item.image_url }} style={styles.postImage} />
       ) : (
         <View style={styles.postPlaceholder}>
-          <Text style={styles.postPlaceholderText} numberOfLines={3}>
+          <Textstyle={styles.postPlaceholderText}numberOfLines={3}>
             {item.content}
           </Text>
         </View>
@@ -153,43 +163,46 @@ export default function ProfileScreen() {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#8a2be2" />
+        <ActivityIndicator size="large" color="#8a2be2"/>
       </View>
-    );
+   );
   }
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.avatarContainer} onPress={pickAvatar}>
-          {profile?.avatar_url ? (
-            <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
-          ) : (
-            <View style={[styles.avatar, styles.avatarPlaceholder]}>
-              <Text style={styles.avatarText}>
-                {profile?.username?.[0]?.toUpperCase() || '?'}
-              </Text>
+        <Viewstyle={styles.headerTop}>
+          <TouchableOpacity style={styles.avatarContainer} onPress={pickAvatar}>
+            {profile?.avatar_url ? (
+              <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
+            ) : (
+              <View style={[styles.avatar, styles.avatarPlaceholder]}>
+                <Text style={styles.avatarText}>
+                  {profile?.username?.[0]?.toUpperCase() || '?'}
+                </Text>
+              </View>
+            )}
+            <View style={styles.cameraIcon}>
+              <Camera color="#fff" size={16} />
             </View>
-          )}
-          <View style={styles.cameraIcon}>
-            <Camera color="#fff" size={16} />
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
+            <LogOut color="#fff" size={20} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.userInfo}>
+<Text style={styles.username}>{profile?.username || user?.email?.split('@')[0] || 'User'}</Text>
+          <Text style={styles.email}>{user?.email}</Text>
+        </View>
 
         <View style={styles.stats}>
           <View style={styles.stat}>
-            <Text style={styles.statNumber}>{posts.length}</Text>
+            <Textstyle={styles.statNumber}>{posts.length}</Text>
             <Text style={styles.statLabel}>posts</Text>
-          </View>
-        </View>
-
-        <Text style={styles.username}>{profile?.username || 'User'}</Text>
-        <Text style={styles.email}>{user?.email}</Text>
-
-        <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
-          <LogOut color="#fff" size={20} />
-          <Text style={styles.logoutButtonText}>Log Out</Text>
-        </TouchableOpacity>
+         </View>
+       </View>
       </View>
 
       <View style={styles.postsHeader}>
@@ -209,7 +222,7 @@ export default function ProfileScreen() {
           </View>
         }
       />
-    </View>
+   </View>
   );
 }
 
@@ -218,29 +231,33 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#1a1a1a',
   },
-  centered: {
+ centered: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
+   alignItems: 'center',
   },
   header: {
     padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#333',
-    alignItems: 'center',
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 20,
   },
   avatarContainer: {
     position: 'relative',
-    marginBottom: 20,
   },
   avatar: {
     width: 100,
     height: 100,
     borderRadius: 50,
-  },
+ },
   avatarPlaceholder: {
     backgroundColor: '#8a2be2',
-    justifyContent: 'center',
+    justifyContent:'center',
     alignItems: 'center',
   },
   avatarText: {
@@ -249,25 +266,44 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   cameraIcon: {
-    position: 'absolute',
+    position:'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: '#8a2be2',
+    backgroundColor:'#8a2be2',
     borderRadius: 15,
     padding: 5,
+  },
+  logoutButton: {
+    backgroundColor: 'rgba(138, 43, 226, 0.3)',
+    borderRadius: 20,
+    padding: 10,
+},
+  userInfo: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  username: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 5,
+  },
+  email: {
+    fontSize: 16,
+    color: '#aaa',
   },
   stats: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 20,
     width: '100%',
   },
   stat: {
     alignItems: 'center',
+    marginHorizontal: 30,
   },
   statNumber: {
     fontSize: 24,
-    fontWeight: '600',
+   fontWeight: '600',
     color: '#fff',
   },
   statLabel: {
@@ -275,38 +311,12 @@ const styles = StyleSheet.create({
     color: '#aaa',
     marginTop: 4,
   },
-  username: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  email: {
-    fontSize: 16,
-    color: '#aaa',
-    marginBottom: 20,
-  },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    backgroundColor: 'rgba(138, 43, 226, 0.3)',
-    borderRadius: 25,
-  },
-  logoutButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-  },
   postsHeader: {
     paddingVertical: 15,
     paddingHorizontal: 20,
-    borderBottomWidth: 1,
+    borderBottomWidth:1,
     borderBottomColor: '#333',
-  },
+ },
   postsHeaderText: {
     fontSize: 18,
     fontWeight: '600',
@@ -329,13 +339,13 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#2a2a2a',
     justifyContent: 'center',
-    alignItems: 'center',
+   alignItems: 'center',
     padding: 8,
   },
   postPlaceholderText: {
-    fontSize: 12,
+   fontSize: 12,
     color: '#fff',
-    textAlign: 'center',
+    textAlign:'center',
   },
   emptyContainer: {
     flex: 1,
@@ -345,7 +355,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 18,
-    fontWeight: '600',
+   fontWeight: '600',
     color: '#fff',
     marginBottom: 8,
   },
