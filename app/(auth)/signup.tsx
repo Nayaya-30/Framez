@@ -37,8 +37,7 @@ const { error } = await signUp(email, password, username);
   };
 
 return (
-    <ImageBackground 
-      source={{ uri: 'https://images.unsplash.com/photo-1515537163457-a4d3cefab7c8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1746&q=80' }} 
+    <ImageBackgroundsource={{ uri: 'https://images.unsplash.com/photo-1515537163457-a4d3cefab7c8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1746&q=80' }} 
       style={styles.container}
       resizeMode="cover"
 >
@@ -51,7 +50,7 @@ return (
             <Text style={styles.logo}>Framez</Text>
 
            <View style={styles.form}>
-              <TextInput
+             <TextInput
                 style={styles.input}
                 placeholder="Email"
                 value={email}
@@ -79,7 +78,7 @@ return (
                 placeholderTextColor="#ccc"
               />
 
-              {error ? <Text style={styles.error}>{error}</Text> : null}
+              {error ?<Text style={styles.error}>{error}</Text> : null}
 
               <TouchableOpacity
                 style={[styles.button, loading && styles.buttonDisabled]}
@@ -88,7 +87,7 @@ return (
               >
                 <Text style={styles.buttonText}>
                   {loading ? 'Creating account...' : 'Sign Up'}
-                </Text>
+</Text>
               </TouchableOpacity>
             </View>
 
@@ -96,7 +95,7 @@ return (
               <Text style={styles.footerText}>Already have an account? </Text>
               <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
                 <Text style={styles.loginLink}>Log in</Text>
-              </TouchableOpacity>
+</TouchableOpacity>
             </View>
           </View>
         </KeyboardAvoidingView>
@@ -128,7 +127,7 @@ const styles = StyleSheet.create({
     marginBottom: 50,
     color: '#fff',
     textShadowColor: 'rgba(138, 43, 226, 0.8)',
-    textShadowOffset: { width: 0, height: 0 },
+    textShadowOffset: { width: 0,height: 0 },
     textShadowRadius: 10,
     fontFamily: Platform.select({ ios: 'Helvetica Neue', android: 'sans-serif' }),
   },
@@ -136,13 +135,13 @@ const styles = StyleSheet.create({
     gap: 15,
   },
   input: {
-    backgroundColor: 'rgba(250, 250, 250, 0.9)',
+    backgroundColor: 'rgba(42, 42, 42, 0.7)',
     borderWidth: 1,
     borderColor: 'rgba(51, 51, 51, 0.3)',
     borderRadius: 10,
     padding: 15,
     fontSize: 14,
-    color: '#000',
+   color: '#fff',
     shadowColor: '#8a2be2',
     shadowOffset: {
       width: 0,
@@ -151,8 +150,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-},
-  button: {
+  },
+button:{
     backgroundColor: 'rgba(138, 43, 226, 0.9)',
     borderRadius: 10,
     padding: 15,
@@ -172,7 +171,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
 color: '#fff',
-    fontSize: 16,
+fontSize: 16,
     fontWeight: '600',
   },
   error: {

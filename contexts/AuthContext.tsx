@@ -1,11 +1,11 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+importReact, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
 interface AuthContextType {
   session: Session | null;
   user: User | null;
-  loading: boolean;
+loading: boolean;
   signUp: (email: string, password: string, username: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -18,7 +18,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -47,15 +47,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Ensure user profile exists in the database
   const ensureProfileExists = async (user: User) => {
     try {
-      const { data: profile } = await supabase
+      //First check if profile already exists
+      const { data: existingProfile, error: fetchError } = await supabase
         .from('profiles')
-        .select('id, username')
+        .select('id')
         .eq('id', user.id)
         .maybeSingle();
 
-      if (!profile) {
-        // Create profile if it doesn't exist
-        const { error: insertError } = await supabase
+      // If there was an error other than "not found",log it
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        console.error('Error fetching profile:', fetchError);
+        return;
+      }
+
+      // If profile doesn't exist, create it
+      if (!existingProfile) {
+        const { error: insertError } =await supabase
           .from('profiles')
           .insert({
             id: user.id,
@@ -64,16 +71,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
 
         if (insertError) {
-          console.error('Error creating profile:', insertError);
+         console.error('Error creating profile:', insertError);
+         // Try updating if insert fails (profile might exist but not returned due to RLS)
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({
+              username: user.user_metadata?.username || user.email?.split('@')[0] || 'user'
+            })
+.eq('id', user.id);
+
+          if (updateError) {
+            console.error('Error updating profile:', updateError);
+          }
         }
       }
-      return profile;
     } catch (error) {
-      console.error('Error checking profile existence:', error);
+      console.error('Error in ensureProfileExists:', error);
     }
   };
 
-  const signUp = async (email: string, password: string, username: string) => {
+ const signUp = async (email: string, password: string, username: string) => {
     const { error, data } = await supabase.auth.signUp({
       email,
       password,
@@ -94,7 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error } =await supabase.auth.signInWithPassword({
       email,
       password,
     });

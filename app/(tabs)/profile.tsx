@@ -1,14 +1,15 @@
-import{ useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, Alert, ScrollView} from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Post, Profile } from '@/types/database';
-import { LogOut, Camera } from 'lucide-react-native';
+import { LogOut, Camera, Plus } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 
 export default function ProfileScreen() {
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<Profile| null>(null);
  const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const { user, signOut } = useAuth();
@@ -18,20 +19,20 @@ export default function ProfileScreen() {
     if (user) {
       fetchProfile();
       fetchUserPosts();
-    }
+   }
   }, [user]);
 
-  const fetchProfile = async () => {
+const fetchProfile = async () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', user?.id)
+        .eq('id',user?.id)
         .maybeSingle();
 
       if (error) throw error;
-      setProfile(data);
-    } catch (error) {
+     setProfile(data);
+   } catch (error) {
       console.error('Error fetching profile:', error);
     }
   };
@@ -42,9 +43,9 @@ export default function ProfileScreen() {
         .from('posts')
         .select(`
           *,
-          profiles (
+profiles(
            username,
-            avatar_url
+           avatar_url
           )
         `)
         .eq('user_id', user?.id)
@@ -53,9 +54,9 @@ export default function ProfileScreen() {
       if (error) throw error;
       setPosts(data || []);
     } catch (error) {
-      console.error('Error fetching posts:', error);
-}finally {
-      setLoading(false);
+console.error('Error fetching posts:',error);
+   }finally{
+setLoading(false);
     }
   };
 
@@ -67,7 +68,7 @@ export default function ProfileScreen() {
       console.error('Error signing out:', error);
       Alert.alert('Error', 'Failed tosign out');
     }
-  };
+ };
 
   const pickAvatar = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -75,9 +76,9 @@ export default function ProfileScreen() {
     if (status !== 'granted') {
       Alert.alert('Permission needed', 'We need camera roll permissions to upload avatars');
       return;
-    }
+}
 
-   const result= await ImagePicker.launchImageLibraryAsync({
+const result=await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
@@ -86,50 +87,49 @@ export default function ProfileScreen() {
 
     if (!result.canceled) {
       uploadAvatar(result.assets[0].uri);
-   }
- };
+}
+};
 
-const uploadAvatar = async (uri: string) => {
+  const uploadAvatar =async (uri: string) => {
     try {
-      // ConvertURI to blob using a different method
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.onload = function() {
-          resolve(xhr.response);
-        };
-        xhr.onerror = function() {
-          reject(new Error('Failed to fetch image'));
-        };
-       xhr.responseType = 'blob';
-        xhr.open('GET', uri, true);
-        xhr.send();
+      // Read the file as base64
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
       });
+      
+      // Convert base64 to Uint8Array
+      const binaryString = atob(base64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      
+      // Create blob fromUint8Array
+      const blob = new Blob([bytes],{ type: 'image/jpeg' });
       
       // Generate a unique file name
       const fileExt = uri.split('.').pop()?.toLowerCase() || 'jpg';
       const fileName = `${user?.id}/avatar.${fileExt}`;
-      constfilePath = `avatars/${fileName}`;
+      const filePath =`avatars/${fileName}`;
 
-      // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
+      // Upload to Supabase Storageconst { error: uploadError } = await supabase.storage
         .from('images')
-        .upload(filePath, blob,{
+        .upload(filePath, blob, {
           cacheControl: '3600',
           upsert: true
         });
 
-      if (uploadError) {
+      if (uploadError){
         throw uploadError;
       }
 
-      // Get the public URL of the uploaded image
+      // Getthe public URL of the uploaded image
       const { data } = supabase.storage
         .from('images')
         .getPublicUrl(filePath);
 
      // Update profile with new avatar URL
-      const { error: updateError } = await supabase
-        .from('profiles')
+      const { error: updateError } = await supabase.from('profiles')
         .update({ avatar_url: data.publicUrl })
         .eq('id', user?.id);
 
@@ -140,24 +140,60 @@ const uploadAvatar = async (uri: string) => {
       //Refresh profile
       fetchProfile();
       Alert.alert('Success', 'Avatar updated successfully!');
-    } catch (error) {
+    } catch(error) {
       console.error('Error uploading avatar:', error);
       Alert.alert('Upload Error', 'Failed to upload avatar: ' + (error as Error).message);
     }
   };
 
-const renderPost =({ item}: { item: Post }) => (
+ constaddPredefinedPosts = async () => {
+    if (!user) return;
+    
+    const predefinedPosts = [
+     {
+        user_id: user.id,
+        content: "Welcome to Framez! This is a sample post to help you get started. Share your moments with the world!",
+        image_url: "https://images.unsplash.com/photo-1501854140801-50d01698950b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1200&q=80"
+      },
+      {
+        user_id: user.id,
+        content: "Beautiful sunset from my evening walk. Nature neverfailsto amaze me! 🌅",
+        image_url: "https://images.unsplash.com/photo-1505506874110-6a7a69069a08?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1200&q=80"
+      },
+      {
+        user_id:user.id,
+        content: "Coffeeand code - the perfect combination for a productive day! ☕️💻",
+        image_url: "https://images.unsplash.com/photo-1554189091-40e1e435cc48?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1200&q=80"
+      }
+];
+
+    try{
+      const { error } = await supabase
+        .from('posts')
+        .insert(predefinedPosts);
+
+      if (error) throw error;
+      
+      Alert.alert('Success', 'Predefined posts added successfully!');
+      fetchUserPosts(); // Refresh the posts list
+    } catch(error) {
+console.error('Error adding predefined posts:', error);
+      Alert.alert('Error', 'Failed to add predefined posts: ' + (error as Error).message);
+    }
+  };
+
+  constrenderPost =({ item}: { item: Post }) => (
     <View style={styles.postItem}>
-      {item.image_url ? (
+     {item.image_url? (
         <Image source={{ uri: item.image_url }} style={styles.postImage} />
       ) : (
         <View style={styles.postPlaceholder}>
-          <Textstyle={styles.postPlaceholderText}numberOfLines={3}>
+          <Text style={styles.postPlaceholderText}numberOfLines={3}>
             {item.content}
           </Text>
         </View>
-      )}
-    </View>
+)}
+   </View>
   );
 
   if (loading) {
@@ -166,46 +202,51 @@ const renderPost =({ item}: { item: Post }) => (
         <ActivityIndicator size="large" color="#8a2be2"/>
       </View>
    );
-  }
+}
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Viewstyle={styles.headerTop}>
+       <View style={styles.headerTop}>
           <TouchableOpacity style={styles.avatarContainer} onPress={pickAvatar}>
             {profile?.avatar_url ? (
               <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
             ) : (
               <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                <Text style={styles.avatarText}>
+                <Textstyle={styles.avatarText}>
                   {profile?.username?.[0]?.toUpperCase() || '?'}
                 </Text>
               </View>
             )}
             <View style={styles.cameraIcon}>
-              <Camera color="#fff" size={16} />
+              <Cameracolor="#fff" size={16} />
             </View>
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
-            <LogOut color="#fff" size={20} />
-          </TouchableOpacity>
+         <Viewstyle={styles.headerActions}>
+            <TouchableOpacity style={styles.addButton} onPress={addPredefinedPosts}>
+              <Plus color="#fff" size={20} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
+              <LogOut color="#fff" size={20} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.userInfo}>
-<Text style={styles.username}>{profile?.username || user?.email?.split('@')[0] || 'User'}</Text>
+          <Text style={styles.username}>{profile?.username || user?.email?.split('@')[0] || 'User'}</Text>
           <Text style={styles.email}>{user?.email}</Text>
-        </View>
+</View>
 
         <View style={styles.stats}>
           <View style={styles.stat}>
-            <Textstyle={styles.statNumber}>{posts.length}</Text>
+            <Text style={styles.statNumber}>{posts.length}</Text>
             <Text style={styles.statLabel}>posts</Text>
          </View>
-       </View>
+        </View>
       </View>
 
-      <View style={styles.postsHeader}>
+      <Viewstyle={styles.postsHeader}>
         <Text style={styles.postsHeaderText}>Your Posts</Text>
       </View>
 
@@ -215,7 +256,7 @@ const renderPost =({ item}: { item: Post }) => (
         keyExtractor={(item) => item.id}
         numColumns={3}
         contentContainerStyle={styles.postsContainer}
-        ListEmptyComponent={
+ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>No posts yet</Text>
             <Text style={styles.emptySubtext}>Share your first post!</Text>
@@ -227,19 +268,19 @@ const renderPost =({ item}: { item: Post }) => (
 }
 
 const styles = StyleSheet.create({
-  container: {
+ container:{
     flex: 1,
     backgroundColor: '#1a1a1a',
   },
  centered: {
     flex: 1,
     justifyContent: 'center',
-   alignItems: 'center',
+    alignItems: 'center',
   },
   header: {
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#333',
+borderBottomColor:'#333',
   },
   headerTop: {
     flexDirection: 'row',
@@ -247,42 +288,51 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 20,
   },
-  avatarContainer: {
+  avatarContainer:{
     position: 'relative',
   },
   avatar: {
     width: 100,
-    height: 100,
+height: 100,
     borderRadius: 50,
- },
+  },
   avatarPlaceholder: {
     backgroundColor: '#8a2be2',
-    justifyContent:'center',
+    justifyContent: 'center',
     alignItems: 'center',
-  },
+},
   avatarText: {
     fontSize: 40,
     fontWeight: '600',
-    color: '#fff',
+color: '#fff',
   },
   cameraIcon: {
-    position:'absolute',
+    position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor:'#8a2be2',
+    backgroundColor: '#8a2be2',
     borderRadius: 15,
     padding: 5,
   },
+  headerActions: {
+flexDirection: 'row',
+    gap: 10,
+  },
+  addButton: {
+    backgroundColor: 'rgba(138, 43, 226, 0.3)',
+    borderRadius: 20,
+    padding: 10,
+ },
   logoutButton: {
     backgroundColor: 'rgba(138, 43, 226, 0.3)',
     borderRadius: 20,
     padding: 10,
-},
+  },
   userInfo: {
     alignItems: 'center',
     marginBottom: 20,
   },
-  username: {
+username: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
@@ -291,32 +341,32 @@ const styles = StyleSheet.create({
   email: {
     fontSize: 16,
     color: '#aaa',
-  },
+ },
   stats: {
     flexDirection: 'row',
     justifyContent: 'center',
     width: '100%',
-  },
+ },
   stat: {
-    alignItems: 'center',
+alignItems: 'center',
     marginHorizontal: 30,
   },
   statNumber: {
     fontSize: 24,
-   fontWeight: '600',
+    fontWeight: '600',
     color: '#fff',
   },
   statLabel: {
     fontSize: 16,
     color: '#aaa',
-    marginTop: 4,
+    marginTop:4,
   },
   postsHeader: {
     paddingVertical: 15,
     paddingHorizontal: 20,
-    borderBottomWidth:1,
+    borderBottomWidth: 1,
     borderBottomColor: '#333',
- },
+  },
   postsHeaderText: {
     fontSize: 18,
     fontWeight: '600',
@@ -327,25 +377,25 @@ const styles = StyleSheet.create({
   },
   postItem: {
     flex: 1 / 3,
-    aspectRatio: 1,
+   aspectRatio: 1,
     padding: 1,
-  },
+ },
   postImage: {
     width: '100%',
-    height: '100%',
+height: '100%',
   },
   postPlaceholder: {
     width: '100%',
     height: '100%',
     backgroundColor: '#2a2a2a',
     justifyContent: 'center',
-   alignItems: 'center',
+    alignItems:'center',
     padding: 8,
   },
   postPlaceholderText: {
-   fontSize: 12,
+    fontSize: 12,
     color: '#fff',
-    textAlign:'center',
+    textAlign: 'center',
   },
   emptyContainer: {
     flex: 1,

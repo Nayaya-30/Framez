@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import{ useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Alert, ImageBackground } from 'react-native'
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,14 +27,14 @@ export default function Login() {
       setLoading(false);
     } else {
       router.replace('/(tabs)');
-    }
+}
   };
 
   return (
     <ImageBackground 
       source={{ uri: 'https://images.unsplash.com/photo-1515537163457-a4d3cefab7c8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1746&q=80' }} 
       style={styles.container}
-      resizeMode="cover"
+     resizeMode="cover"
     >
       <View style={styles.overlay}>
         <KeyboardAvoidingView
@@ -87,7 +87,7 @@ export default function Login() {
         </KeyboardAvoidingView>
       </View>
     </ImageBackground>
-  );
+);
 }
 
 const styles = StyleSheet.create({
@@ -121,13 +121,13 @@ const styles = StyleSheet.create({
     gap: 15,
   },
   input: {
-    backgroundColor: 'rgba(250, 250, 250, 0.9)',
+    backgroundColor: 'rgba(42, 42, 42, 0.7)',
     borderWidth: 1,
     borderColor: 'rgba(51, 51, 51, 0.3)',
     borderRadius: 10,
     padding: 15,
     fontSize: 14,
-    color: '#000',
+   color: '#fff',
     shadowColor: '#8a2be2',
     shadowOffset: {
       width: 0,
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  button: {
+button: {
     backgroundColor: 'rgba(138, 43, 226, 0.9)',
     borderRadius: 10,
     padding: 15,
