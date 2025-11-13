@@ -37,7 +37,7 @@ const { error } = await signUp(email, password, username);
   };
 
 return (
-    <ImageBackgroundsource={{ uri: 'https://images.unsplash.com/photo-1515537163457-a4d3cefab7c8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1746&q=80' }} 
+hh    <ImageBackgroundsource={{ uri: 'https://images.unsplash.com/photo-1515537163457-a4d3cefab7c8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1746&q=80' }} 
       style={styles.container}
       resizeMode="cover"
 >

@@ -1,11 +1,11 @@
-importReact, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
 interface AuthContextType {
   session: Session | null;
   user: User | null;
-loading: boolean;
+  loading: boolean;
   signUp: (email: string, password: string, username: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -18,7 +18,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-useEffect(() => {
+  useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -47,50 +47,69 @@ useEffect(() => {
   // Ensure user profile exists in the database
   const ensureProfileExists = async (user: User) => {
     try {
-      //First check if profile already exists
+      console.log('Checking if profile exists for user:', user.id);
+      
+      // First check if profile already exists
       const { data: existingProfile, error: fetchError } = await supabase
         .from('profiles')
         .select('id')
         .eq('id', user.id)
         .maybeSingle();
 
-      // If there was an error other than "not found",log it
+      console.log('Profile fetch result:', { existingProfile, fetchError });
+      
+      // If there was an error other than "not found", log it
       if (fetchError && fetchError.code !== 'PGRST116') {
         console.error('Error fetching profile:', fetchError);
-        return;
       }
 
       // If profile doesn't exist, create it
       if (!existingProfile) {
-        const { error: insertError } =await supabase
+        const profileData = {
+          id: user.id,
+          username: user.user_metadata?.username || user.email?.split('@')[0] || 'user' + Math.floor(Math.random() * 1000),
+          avatar_url: user.user_metadata?.avatar_url || null
+        };
+        
+        console.log('Profile does not exist, creating with data:', profileData);
+
+        // Try to insert the profile
+        const { error: insertError } = await supabase
           .from('profiles')
-          .insert({
-            id: user.id,
-            username: user.user_metadata?.username || user.email?.split('@')[0] || 'user',
-            avatar_url: user.user_metadata?.avatar_url || null
-          });
+          .insert(profileData);
 
         if (insertError) {
-         console.error('Error creating profile:', insertError);
-         // Try updating if insert fails (profile might exist but not returned due to RLS)
+          console.error('Error creating profile:', insertError);
+          console.log('Profile data:', profileData);
+          
+          // If insert fails, try updating (in case it exists but wasn't returned due to RLS)
+          console.log('Trying to update profile instead');
           const { error: updateError } = await supabase
             .from('profiles')
             .update({
-              username: user.user_metadata?.username || user.email?.split('@')[0] || 'user'
+              username: profileData.username
             })
-.eq('id', user.id);
+            .eq('id', user.id);
 
           if (updateError) {
             console.error('Error updating profile:', updateError);
+          } else {
+            console.log('Profile updated successfully');
           }
+        } else {
+          console.log('Profile created successfully');
         }
+      } else {
+        console.log('Profile already exists');
       }
     } catch (error) {
       console.error('Error in ensureProfileExists:', error);
     }
   };
 
- const signUp = async (email: string, password: string, username: string) => {
+  const signUp = async (email: string, password: string, username: string) => {
+    console.log('Attempting to sign up user:', { email, username });
+    
     const { error, data } = await supabase.auth.signUp({
       email,
       password,
@@ -101,8 +120,11 @@ useEffect(() => {
       },
     });
     
+    console.log('Supabase signup result:', { error, data });
+    
     // If signup was successful, log the user in immediately
     if (!error && data.user) {
+      console.log('Signup successful, creating profile for user:', data.user);
       // Create profile for the new user
       await ensureProfileExists(data.user);
     }
@@ -111,7 +133,7 @@ useEffect(() => {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } =await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
